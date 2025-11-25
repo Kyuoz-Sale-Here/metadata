@@ -1,13 +1,28 @@
 import sharp from 'sharp';
-import fs from 'fs';
+import fetch from 'node-fetch';
 
 async function run() {
-  // อ่านไฟล์ภาพจากโฟลเดอร์เดียวกับ pic.js
-  const buffer = fs.readFileSync('/Users/salehere/Downloads/ho.jpg');
+  const imageUrl = process.argv[2]; // รับ URL จาก argument เวลารัน
 
-  const metadata = await sharp(buffer).metadata();
+  if (!imageUrl) {
+    console.error('❌ กรุณาใส่ URL ของภาพ เช่น: node pic.js "https://example.com/image.jpg"');
+    process.exit(1);
+  }
 
-  console.log(metadata);
+  try {
+    const response = await fetch(imageUrl);
+
+    if (!response.ok) {
+      throw new Error(`โหลดรูปไม่ได้: ${response.status} ${response.statusText}`);
+    }
+
+    const buffer = await response.buffer();
+    const metadata = await sharp(buffer).metadata();
+
+    console.log(metadata);
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+  }
 }
 
 run();
