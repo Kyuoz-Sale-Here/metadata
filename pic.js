@@ -1,28 +1,25 @@
-import sharp from 'sharp';
-import fetch from 'node-fetch';
+import sharp from "sharp";
 
-async function run() {
-  const imageUrl = process.argv[2]; // รับ URL จาก argument เวลารัน
-
-  if (!imageUrl) {
-    console.error('❌ กรุณาใส่ URL ของภาพ เช่น: node pic.js "https://example.com/image.jpg"');
-    process.exit(1);
-  }
-
+export default async function handler(req, res) {
   try {
-    const response = await fetch(imageUrl);
+    const url = req.query.url;
 
-    if (!response.ok) {
-      throw new Error(`โหลดรูปไม่ได้: ${response.status} ${response.statusText}`);
+    if (!url) {
+      return res.status(400).json({ error: "Missing ?url=" });
     }
 
-    const buffer = await response.buffer();
+    // โหลด binary จาก URL
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // อ่าน metadata
     const metadata = await sharp(buffer).metadata();
 
-    console.log(metadata);
+    return res.status(200).json(metadata);
+
   } catch (err) {
-    console.error('❌ Error:', err.message);
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 }
-
-run();
